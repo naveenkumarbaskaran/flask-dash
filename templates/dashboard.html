@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>flask-dash</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/1.0.2/Chart.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Analytics Dashboard</h1>
+        <canvas id="chart" width="800" height="400"></canvas>
+    </div>
+    <script>
+        fetch('/api/stats')
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var ctx = document.getElementById('chart').getContext('2d');
+                new Chart(ctx).Line({
+                    labels: data.map(function(d) { return d.date; }),
+                    datasets: [{
+                        label: 'Page Views',
+                        fillColor: 'rgba(66,139,202,0.2)',
+                        strokeColor: 'rgba(66,139,202,1)',
+                        data: data.map(function(d) { return d.count; })
+                    }]
+                });
+            });
+    </script>
+</body>
+</html>
