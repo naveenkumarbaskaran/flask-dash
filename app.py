@@ -1,9 +1,10 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///analytics.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 
@@ -27,7 +28,6 @@ def dashboard():
 
 @app.route("/api/track", methods=["POST"])
 def track():
-    from flask import request
     view = PageView(
         path=request.json.get("path", "/"),
         user_agent=request.headers.get("User-Agent"),
@@ -52,6 +52,22 @@ def stats():
         .all()
     )
     return jsonify([{"date": str(d), "count": c} for d, c in daily])
+
+
+@app.route("/api/top-pages")
+def top_pages():
+    from sqlalchemy import func
+    pages = (
+        db.session.query(
+            PageView.path,
+            func.count(PageView.id).label("count"),
+        )
+        .group_by(PageView.path)
+        .order_by(func.count(PageView.id).desc())
+        .limit(10)
+        .all()
+    )
+    return jsonify([{"path": p, "count": c} for p, c in pages])
 
 
 if __name__ == "__main__":
